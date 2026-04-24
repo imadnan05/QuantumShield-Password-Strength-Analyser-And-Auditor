@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>QuantumShield Ultimate Pro</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zxcvbn/4.4.2/zxcvbn.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+
+<style>
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Segoe UI,Arial,sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0d0018,#1b0030,#260045,#11001d);
+min-height:100vh;
+padding:20px;
+color:#fff;
+}
+
+.container{
+max-width:1250px;
+margin:auto;
+padding:28px;
+border-radius:28px;
+background:rgba(255,255,255,.05);
+backdrop-filter:blur(18px);
+box-shadow:0 25px 60px rgba(0,0,0,.45);
+}
+
+h1{
+text-align:center;
+font-size:38px;
+margin-bottom:8px;
+background:linear-gradient(90deg,#22d3ee,#8b5cf6,#d946ef);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+.sub{
+text-align:center;
+font-size:14px;
+color:#cbd5e1;
+margin-bottom:22px;
+}
+
+/* topbar */
+.topbar{
+display:flex;
+gap:12px;
+align-items:center;
+flex-wrap:wrap;
+margin-bottom:18px;
+}
+
+#password{
+flex:1;
+min-width:280px;
+padding:16px;
+font-size:16px;
+border:none;
+outline:none;
+border-radius:14px;
+background:#160328;
+color:#fff;
+}
+
+.actions{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+}
+
+.actions button{
+width:50px;
+height:50px;
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:18px;
+border:none;
+border-radius:14px;
+cursor:pointer;
+color:#fff;
+background:linear-gradient(135deg,#8b5cf6,#d946ef);
+transition:.25s;
+}
+
+.actions button:hover{
+transform:translateY(-2px) scale(1.05);
+}
+
+/* gauge */
+.center{
+display:flex;
+justify-content:center;
+margin:16px 0;
+}
+
+.gauge{
+width:180px;
+height:180px;
+border-radius:50%;
+background:conic-gradient(#22c55e 0deg,#1f2937 0deg);
+display:flex;
+justify-content:center;
+align-items:center;
+position:relative;
+}
+
+.gauge::before{
+content:"";
+position:absolute;
+width:130px;
+height:130px;
+border-radius:50%;
+background:#160328;
+}
+
+.gauge-value{
+position:relative;
+z-index:2;
+font-size:32px;
+font-weight:700;
+}
+
+#strength{
+text-align:center;
+font-weight:700;
+color:#d8b4fe;
+margin-bottom:14px;
+}
+
+/* cards */
+.grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:14px;
+margin-top:14px;
+}
+
+.card{
+background:rgba(255,255,255,.05);
+padding:16px;
+border-radius:18px;
+min-height:115px;
+}
+
+.card h3{
+font-size:13px;
+color:#d8b4fe;
+margin-bottom:8px;
+}
+
+.big{
+font-size:24px;
+font-weight:700;
+word-break:break-word;
+}
+
+.hash{
+font-size:13px;
+font-family:monospace;
+word-break:break-all;
+line-height:1.6;
+}
+
+/* sections */
+.section{
+margin-top:18px;
+background:rgba(255,255,255,.05);
+padding:18px;
+border-radius:18px;
+}
+
+.section h3{
+margin-bottom:10px;
+color:#d8b4fe;
+}
+
+ul{
+margin-left:18px;
+line-height:1.8;
+}
+
+.footer{
+margin-top:18px;
+text-align:center;
+font-size:13px;
+color:#cbd5e1;
+}
+
+.safe{color:#22c55e}
+.warn{color:#f59e0b}
+.danger{color:#ef4444}
+
+@media(max-width:768px){
+.topbar{
+flex-direction:column;
+align-items:stretch;
+}
+.actions{
+justify-content:center;
+}
+.actions button{
+flex:1;
+min-width:50px;
+}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🛡 QuantumShield Ultimate Pro</h1>
+<div class="sub">Developed By Adnan Zafar</div>
+
+<div class="topbar">
+
+<input type="password" id="password" placeholder="Enter Password" oninput="analyze()">
+
+<div class="actions">
+<button onclick="togglePass()" title="Show/Hide">👁</button>
+<button onclick="generatePassword()" title="Generate">🎲</button>
+<button onclick="copyPass()" title="Copy">📋</button>
+<button onclick="exportReport()" title="Export">📄</button>
+<button onclick="clearAll()" title="Clear">🗑</button>
+<button onclick="speakResult()" title="Voice">🔊</button>
+</div>
+
+</div>
+
+<div class="center">
+<div class="gauge" id="gauge">
+<div class="gauge-value" id="gaugeValue">0%</div>
+</div>
+</div>
+
+<div id="strength">Waiting...</div>
+
+<div class="grid">
+
+<div class="card">
+<h3>Score</h3>
+<div class="big" id="score">0 / 4</div>
+</div>
+
+<div class="card">
+<h3>Entropy</h3>
+<div class="big" id="entropy">0</div>
+</div>
+
+<div class="card">
+<h3>Crack Time</h3>
+<div class="big" id="crack">--</div>
+</div>
+
+<div class="card">
+<h3>Risk</h3>
+<div class="big" id="risk">--</div>
+</div>
+
+<div class="card">
+<h3>MD5 Hash</h3>
+<div class="hash" id="md5">--</div>
+</div>
+
+<div class="card">
+<h3>SHA256 Hash</h3>
+<div class="hash" id="sha">--</div>
+</div>
+
+<div class="card">
+<h3>HIBP Check</h3>
+<div class="big" id="breach">--</div>
+</div>
+
+<div class="card">
+<h3>Compliance</h3>
+<div class="big" id="policy">--</div>
+</div>
+
+</div>
+
+<div class="section">
+<h3>Smart Suggestions</h3>
+<ul id="tips">
+<li>Enter password to begin.</li>
+</ul>
+</div>
+
+<!-- <div class="section">
+<h3>Password History</h3>
+<ul id="history"></ul>
+</div> -->
+
+<div class="footer">
+Security & Auditing 6th Semester Mini Project</div>
+
+</div>
+
+<script>
+
+function togglePass(){
+let p=document.getElementById("password");
+p.type = p.type==="password" ? "text":"password";
+}
+
+function generatePassword(){
+const chars="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
+let pass="";
+for(let i=0;i<16;i++){
+pass += chars[Math.floor(Math.random()*chars.length)];
+}
+document.getElementById("password").value=pass;
+analyze();
+}
+
+function copyPass(){
+navigator.clipboard.writeText(document.getElementById("password").value);
+}
+
+function clearAll(){
+document.getElementById("password").value="";
+document.getElementById("score").innerText="0 / 4";
+document.getElementById("entropy").innerText="0";
+document.getElementById("crack").innerText="--";
+document.getElementById("risk").innerText="--";
+document.getElementById("md5").innerText="--";
+document.getElementById("sha").innerText="--";
+document.getElementById("breach").innerText="--";
+document.getElementById("policy").innerText="--";
+document.getElementById("strength").innerText="Waiting...";
+document.getElementById("tips").innerHTML="<li>Enter password to begin.</li>";
+document.getElementById("gaugeValue").innerText="0%";
+document.getElementById("gauge").style.background=
+"conic-gradient(#22c55e 0deg,#1f2937 0deg)";
+}
+
+function speakResult(){
+let text="Password strength is "+
+document.getElementById("strength").innerText+
+". Risk level is "+
+document.getElementById("risk").innerText;
+
+speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+}
+
+function entropy(pass){
+let pool=0;
+if(/[a-z]/.test(pass)) pool+=26;
+if(/[A-Z]/.test(pass)) pool+=26;
+if(/[0-9]/.test(pass)) pool+=10;
+if(/[^A-Za-z0-9]/.test(pass)) pool+=32;
+if(pool===0) return 0;
+return (pass.length*Math.log2(pool)).toFixed(2);
+}
+
+function compliance(pass){
+let ok=true;
+if(pass.length<12) ok=false;
+if(!/[A-Z]/.test(pass)) ok=false;
+if(!/[a-z]/.test(pass)) ok=false;
+if(!/[0-9]/.test(pass)) ok=false;
+if(!/[^A-Za-z0-9]/.test(pass)) ok=false;
+return ok ? "Strong Policy" : "Weak Policy";
+}
+
+function updateGauge(score){
+let percent=Math.round((score/4)*100);
+let deg=percent*3.6;
+
+document.getElementById("gauge").style.background=
+`conic-gradient(#22c55e ${deg}deg,#1f2937 ${deg}deg)`;
+
+document.getElementById("gaugeValue").innerText=percent+"%";
+}
+
+function saveHistory(pass){
+if(!pass) return;
+let h=JSON.parse(localStorage.getItem("hist")||"[]");
+h.unshift(pass);
+h=[...new Set(h)].slice(0,5);
+localStorage.setItem("hist",JSON.stringify(h));
+renderHistory();
+}
+
+function renderHistory(){
+let h=JSON.parse(localStorage.getItem("hist")||"[]");
+let ul=document.getElementById("history");
+ul.innerHTML="";
+h.forEach(x=>{
+let li=document.createElement("li");
+li.innerText=x;
+ul.appendChild(li);
+});
+}
+
+function exportReport(){
+let txt=
+"QuantumShield Report\n\n"+
+"Password: "+document.getElementById("password").value+"\n"+
+"Score: "+document.getElementById("score").innerText+"\n"+
+"Entropy: "+document.getElementById("entropy").innerText+"\n"+
+"Risk: "+document.getElementById("risk").innerText;
+
+let blob=new Blob([txt],{type:"text/plain"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download="report.txt";
+a.click();
+}
+
+async function sha1(text){
+const data=new TextEncoder().encode(text);
+const hash=await crypto.subtle.digest("SHA-1",data);
+return Array.from(new Uint8Array(hash))
+.map(b=>b.toString(16).padStart(2,"0"))
+.join("")
+.toUpperCase();
+}
+
+async function checkPwned(password){
+try{
+let hash=await sha1(password);
+let prefix=hash.substring(0,5);
+let suffix=hash.substring(5);
+
+let res=await fetch("https://api.pwnedpasswords.com/range/"+prefix);
+let txt=await res.text();
+
+let found=false,count=0;
+
+txt.split("\n").forEach(line=>{
+let parts=line.trim().split(":");
+if(parts[0]===suffix){
+found=true;
+count=parts[1];
+}
+});
+
+document.getElementById("breach").innerHTML=
+found ? `<span class='danger'>Leaked ${count}x</span>`
+: `<span class='safe'>Safe</span>`;
+
+}catch{
+document.getElementById("breach").innerText="Unavailable";
+}
+}
+
+async function analyze(){
+
+let pass=document.getElementById("password").value.trim();
+if(pass==="") return;
+
+let r=zxcvbn(pass);
+let score=r.score;
+
+document.getElementById("score").innerText=score+" / 4";
+document.getElementById("entropy").innerText=entropy(pass);
+document.getElementById("crack").innerText=
+r.crack_times_display.offline_slow_hashing_1e4_per_second;
+
+let risk="High";
+if(score>=2) risk="Medium";
+if(score>=4) risk="Low";
+
+document.getElementById("risk").innerText=risk;
+
+let labels=["Very Weak","Weak","Fair","Strong","Excellent"];
+document.getElementById("strength").innerText=labels[score];
+
+document.getElementById("policy").innerText=compliance(pass);
+
+updateGauge(score);
+
+document.getElementById("md5").innerText=
+CryptoJS.MD5(pass).toString();
+
+document.getElementById("sha").innerText=
+CryptoJS.SHA256(pass).toString();
+
+await checkPwned(pass);
+
+let ul=document.getElementById("tips");
+ul.innerHTML="";
+
+if(r.feedback.warning){
+let li=document.createElement("li");
+li.innerText=r.feedback.warning;
+ul.appendChild(li);
+}
+
+r.feedback.suggestions.forEach(x=>{
+let li=document.createElement("li");
+li.innerText=x;
+ul.appendChild(li);
+});
+
+if(ul.innerHTML===""){
+ul.innerHTML="<li>Excellent strong password.</li>";
+}
+
+saveHistory(pass);
+}
+
+renderHistory();
+
+</script>
+
+</body>
+</html>
